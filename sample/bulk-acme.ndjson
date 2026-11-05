@@ -1,0 +1,9 @@
+{ "index": { "_id": "1" } }
+{ "order_id": "A-1001", "email": "jane.doe@example.com", "total": 42.5, "level": "info" }
+{ "create": { "_id": "2" } }
+{ "order_id": "A-1002", "email": "bob.smith@example.com", "total": 10, "level": "info" }
+{ "index": { "_id": "3" } }
+{ "order_id": "A-1003", "email": "debug@example.com", "total": 0, "level": "debug" }
+{ "update": { "_id": "1" } }
+{ "doc": { "total": 45.0, "email": "jane.doe@example.com" } }
+{ "delete": { "_id": "2" } }

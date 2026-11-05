@@ -1,0 +1,114 @@
+<svg viewBox="0 0 1280 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A legacy client sends a bulk request to Logstash, which pairs the lines, applies rules and writes to per-tenant Elasticsearch indices">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#516381"/>
+    </marker>
+    <symbol id="logo-es" viewBox="0 0 32 32"><g fill="none" fill-rule="evenodd" transform="translate(2)">
+    <path class="euiIcon__fillNegative" d="M0,16 C0,17.384 0.194,18.72 0.524,20 L20,20 C22.209,20 24,18.209 24,16 C24,13.791 22.209,12 20,12 L0.524,12 C0.194,13.28 0,14.616 0,16"/>
+    <path fill="#FEC514" d="M26.9238,7.6621 C27.4828,7.1461 28.0028,6.5931 28.4798,6.0001 C25.5468,2.3461 21.0498,0.0001 15.9998,0.0001 C9.6788,0.0001 4.2388,3.6781 1.6438,9.0001 L23.5108,9.0001 C24.7768,9.0001 25.9938,8.5191 26.9238,7.6621"/>
+    <path fill="#00BFB3" d="M23.5107,23 L1.6437,23 C4.2397,28.323 9.6787,32 15.9997,32 C21.0497,32 25.5467,29.654 28.4797,26 C28.0027,25.407 27.4827,24.854 26.9237,24.338 C25.9937,23.48 24.7767,23 23.5107,23"/>
+  </g></symbol>
+    <symbol id="logo-ls" viewBox="0 0 32 32"><g transform="translate(3)">
+    <polygon fill="#3EBEB0" points="16 32 27 32 27 20 16 20"/>
+    <path fill="#FEC514" d="M1,0 L0,0 L0,20 L13,20 L13,12 C13,5.373 7.627,0 1,0"/>
+    <path class="euiIcon__fillNegative" d="M0,20 L0,20 C0,26.627 5.373,32 12,32 L13,32 L13,20 L0,20 Z"/>
+  </g></symbol>
+    <symbol id="logo-kb" viewBox="0 0 32 32"><g fill="none" fill-rule="evenodd" transform="translate(4)">
+    <polygon fill="#F04E98" points="0 0 0 28.789 24.935 .017"/>
+    <path class="euiIcon__fillNegative" d="M0,12 L0,28.789 L11.906,15.051 C8.368,13.115 4.317,12 0,12"/>
+    <path fill="#00BFB3" d="M14.4785,16.664 L2.2675,30.754 L1.1945,31.991 L24.3865,31.991 C23.1345,25.699 19.5035,20.272 14.4785,16.664"/>
+  </g></symbol>
+    <style>
+      .euiIcon__fillNegative { fill: #343741; }
+      .label { font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 15px; fill: #111C2C; }
+      .sub   { font-family: Inter, system-ui, sans-serif; font-weight: 400; font-size: 12px; fill: #516381; }
+      .edge  { font-family: Inter, system-ui, sans-serif; font-weight: 500; font-size: 12px; fill: #516381; }
+      .group { font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 13px; fill: #516381; letter-spacing: 0.08em; }
+      .mono  { font-family: 'Roboto Mono', ui-monospace, Menlo, monospace; font-size: 12px; fill: #1D2A3E; }
+    </style>
+  </defs>
+  <rect width="1280" height="400" fill="#FFFFFF"/>
+
+  <!-- Client -->
+  <g transform="translate(24, 152)">
+    <rect width="176" height="96" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/>
+    <rect width="4" height="96" fill="#BC1E70"/>
+    <text x="20" y="34" class="label">Legacy client</text>
+    <text x="20" y="56" class="sub">Sends _bulk as is</text>
+    <text x="20" y="74" class="sub">No Elasticsearch key</text>
+  </g>
+
+  <line x1="200" y1="200" x2="240" y2="200" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="24" y="120" class="edge">POST :8080</text>
+  <text x="24" y="138" class="mono">X-Request-Id, X-Tenant-Id</text>
+
+  <!-- Logstash boundary -->
+  <rect x="240" y="96" width="744" height="224" rx="8" fill="#F6F9FC" stroke="#CAD3E2" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <use href="#logo-ls" x="256" y="64" width="24" height="24"/>
+  <text x="288" y="84" class="group">LOGSTASH</text>
+
+  <g transform="translate(272, 152)">
+    <rect width="152" height="96" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/>
+    <rect width="4" height="96" fill="#008B87"/>
+    <text x="20" y="34" class="label">1. HTTP input</text>
+    <text x="20" y="56" class="sub">Reads the body</text>
+    <text x="20" y="74" class="sub">One event per line</text>
+  </g>
+  <line x1="424" y1="200" x2="448" y2="200" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <g transform="translate(448, 152)">
+    <rect width="152" height="96" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/>
+    <rect width="4" height="96" fill="#0B64DD"/>
+    <text x="20" y="34" class="label">2. Pair lines</text>
+    <text x="20" y="56" class="sub">Action + source</text>
+    <text x="20" y="74" class="sub">Queue per request</text>
+  </g>
+  <line x1="600" y1="200" x2="624" y2="200" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <g transform="translate(624, 152)">
+    <rect width="152" height="96" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/>
+    <rect width="4" height="96" fill="#0B64DD"/>
+    <text x="20" y="34" class="label">3. Rules</text>
+    <text x="20" y="56" class="sub">Mask email</text>
+    <text x="20" y="74" class="sub">Drop debug, route</text>
+  </g>
+  <line x1="776" y1="200" x2="800" y2="200" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <g transform="translate(800, 152)">
+    <rect width="152" height="96" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/>
+    <rect width="4" height="96" fill="#0B64DD"/>
+    <text x="20" y="34" class="label">4. ES output</text>
+    <text x="20" y="56" class="sub">Holds the credentials</text>
+    <text x="20" y="74" class="sub">Writes to _bulk</text>
+  </g>
+
+  <text x="256" y="304" class="mono">pipeline.workers: 1   pipeline.ordered: true</text>
+
+  <line x1="984" y1="200" x2="1040" y2="200" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Elasticsearch -->
+  <g transform="translate(1040, 152)">
+    <rect width="216" height="96" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/>
+    <rect width="4" height="96" fill="#0B64DD"/>
+    <use href="#logo-es" x="176" y="16" width="24" height="24"/>
+    <text x="20" y="34" class="label">Elasticsearch</text>
+    <text x="20" y="58" class="mono">orders-acme</text>
+    <text x="20" y="76" class="mono">orders-globex</text>
+  </g>
+
+  <!-- Kibana reads from Elasticsearch -->
+  <line x1="1148" y1="288" x2="1148" y2="248" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="1160" y="274" class="edge">reads</text>
+  <g transform="translate(1040, 288)">
+    <rect width="216" height="80" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/>
+    <rect width="4" height="80" fill="#0B64DD"/>
+    <use href="#logo-kb" x="176" y="16" width="24" height="24"/>
+    <text x="20" y="34" class="label">Kibana</text>
+    <text x="20" y="56" class="sub">Discover: see the documents</text>
+  </g>
+
+  <!-- Rejected -->
+  <g transform="translate(256, 336)">
+    <text x="0" y="14" class="sub">Missing headers or an orphan source line: printed to stdout, never indexed</text>
+  </g>
+</svg>

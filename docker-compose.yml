@@ -1,0 +1,60 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:${ELASTIC_PASSWORD:-changeme} http://localhost:9200/_cluster/health | grep -qE 'green|yellow'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # One-shot job: gives Kibana's service user a password, then exits.
+  kibana-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - >
+        curl -sf -X POST -u elastic:${ELASTIC_PASSWORD:-changeme}
+        -H 'Content-Type: application/json'
+        http://elasticsearch:9200/_security/user/kibana_system/_password
+        -d '{"password":"${ELASTIC_PASSWORD:-changeme}"}'
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.2.0
+    depends_on:
+      kibana-setup:
+        condition: service_completed_successfully
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+    ports:
+      - "5601:5601"   # open this in your browser to look at the documents
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.2.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ES_HOST=http://elasticsearch:9200
+      - ES_USER=elastic
+      - ES_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "${LOGSTASH_PORT:-8080}:8080"   # bulk requests come in here
+      - "9600:9600"   # monitoring API

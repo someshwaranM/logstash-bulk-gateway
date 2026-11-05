@@ -1,0 +1,110 @@
+<svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="How five bulk lines turn into four Elasticsearch operations using a pending queue">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#516381"/>
+    </marker>
+    <symbol id="logo-es" viewBox="0 0 32 32"><g fill="none" fill-rule="evenodd" transform="translate(2)">
+    <path class="euiIcon__fillNegative" d="M0,16 C0,17.384 0.194,18.72 0.524,20 L20,20 C22.209,20 24,18.209 24,16 C24,13.791 22.209,12 20,12 L0.524,12 C0.194,13.28 0,14.616 0,16"/>
+    <path fill="#FEC514" d="M26.9238,7.6621 C27.4828,7.1461 28.0028,6.5931 28.4798,6.0001 C25.5468,2.3461 21.0498,0.0001 15.9998,0.0001 C9.6788,0.0001 4.2388,3.6781 1.6438,9.0001 L23.5108,9.0001 C24.7768,9.0001 25.9938,8.5191 26.9238,7.6621"/>
+    <path fill="#00BFB3" d="M23.5107,23 L1.6437,23 C4.2397,28.323 9.6787,32 15.9997,32 C21.0497,32 25.5467,29.654 28.4797,26 C28.0027,25.407 27.4827,24.854 26.9237,24.338 C25.9937,23.48 24.7767,23 23.5107,23"/>
+  </g></symbol>
+    <symbol id="logo-ls" viewBox="0 0 32 32"><g transform="translate(3)">
+    <polygon fill="#3EBEB0" points="16 32 27 32 27 20 16 20"/>
+    <path fill="#FEC514" d="M1,0 L0,0 L0,20 L13,20 L13,12 C13,5.373 7.627,0 1,0"/>
+    <path class="euiIcon__fillNegative" d="M0,20 L0,20 C0,26.627 5.373,32 12,32 L13,32 L13,20 L0,20 Z"/>
+  </g></symbol>
+    <symbol id="logo-kb" viewBox="0 0 32 32"><g fill="none" fill-rule="evenodd" transform="translate(4)">
+    <polygon fill="#F04E98" points="0 0 0 28.789 24.935 .017"/>
+    <path class="euiIcon__fillNegative" d="M0,12 L0,28.789 L11.906,15.051 C8.368,13.115 4.317,12 0,12"/>
+    <path fill="#00BFB3" d="M14.4785,16.664 L2.2675,30.754 L1.1945,31.991 L24.3865,31.991 C23.1345,25.699 19.5035,20.272 14.4785,16.664"/>
+  </g></symbol>
+    <style>
+      .euiIcon__fillNegative { fill: #343741; }
+      .label { font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 14px; fill: #111C2C; }
+      .sub   { font-family: Inter, system-ui, sans-serif; font-weight: 400; font-size: 12px; fill: #516381; }
+      .group { font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 13px; fill: #516381; letter-spacing: 0.08em; }
+      .mono  { font-family: 'Roboto Mono', ui-monospace, Menlo, monospace; font-size: 13px; fill: #1D2A3E; }
+    </style>
+  </defs>
+  <rect width="1200" height="560" fill="#FFFFFF"/>
+
+  <text x="40" y="48" class="group">LINES FROM THE CLIENT</text>
+  <use href="#logo-ls" x="520" y="30" width="22" height="22"/>
+  <text x="550" y="48" class="group">WHAT LOGSTASH DOES</text>
+  <use href="#logo-es" x="880" y="30" width="22" height="22"/>
+  <text x="910" y="48" class="group">SENT TO ELASTICSEARCH</text>
+
+  <!-- Row 1 -->
+  <g transform="translate(40, 64)">
+    <rect width="440" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#008B87"/>
+    <text x="20" y="28" class="mono">{ "index": { "_id": "1" } }</text><text x="20" y="48" class="sub">Action line</text>
+  </g>
+  <line x1="480" y1="96" x2="520" y2="96" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(520, 64)">
+    <rect width="320" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#0B64DD"/>
+    <text x="20" y="28" class="label">Push to queue, drop event</text><text x="20" y="48" class="sub">Queue: [ index 1 ]</text>
+  </g>
+  <text x="880" y="100" class="sub">nothing yet, waiting for the source</text>
+
+  <!-- Row 2 -->
+  <g transform="translate(40, 152)">
+    <rect width="440" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#516381"/>
+    <text x="20" y="28" class="mono">{ "order_id": "A-1001", "email": ... }</text><text x="20" y="48" class="sub">Source line</text>
+  </g>
+  <line x1="480" y1="184" x2="520" y2="184" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(520, 152)">
+    <rect width="320" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#0B64DD"/>
+    <text x="20" y="28" class="label">Take next from queue</text><text x="20" y="48" class="sub">Queue is empty, this is index 1</text>
+  </g>
+  <line x1="840" y1="184" x2="880" y2="184" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(880, 152)">
+    <rect width="280" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#BC1E70"/>
+    <text x="20" y="28" class="label">index doc 1</text><text x="20" y="48" class="sub">email masked</text>
+  </g>
+
+  <!-- Row 3 -->
+  <g transform="translate(40, 240)">
+    <rect width="440" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#008B87"/>
+    <text x="20" y="28" class="mono">{ "update": { "_id": "1" } }</text><text x="20" y="48" class="sub">Action line</text>
+  </g>
+  <line x1="480" y1="272" x2="520" y2="272" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(520, 240)">
+    <rect width="320" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#0B64DD"/>
+    <text x="20" y="28" class="label">Push to queue, drop event</text><text x="20" y="48" class="sub">Queue: [ update 1 ]</text>
+  </g>
+  <text x="880" y="276" class="sub">nothing yet, waiting for the source</text>
+
+  <!-- Row 4 -->
+  <g transform="translate(40, 328)">
+    <rect width="440" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#516381"/>
+    <text x="20" y="28" class="mono">{ "doc": { "total": 45.0 } }</text><text x="20" y="48" class="sub">Source line</text>
+  </g>
+  <line x1="480" y1="360" x2="520" y2="360" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(520, 328)">
+    <rect width="320" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#0B64DD"/>
+    <text x="20" y="28" class="label">Take next, unwrap "doc"</text><text x="20" y="48" class="sub">Queue is empty, this is update 1</text>
+  </g>
+  <line x1="840" y1="360" x2="880" y2="360" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(880, 328)">
+    <rect width="280" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#BC1E70"/>
+    <text x="20" y="28" class="label">update doc 1</text><text x="20" y="48" class="sub">partial update, total = 45</text>
+  </g>
+
+  <!-- Row 5 -->
+  <g transform="translate(40, 416)">
+    <rect width="440" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#008B87"/>
+    <text x="20" y="28" class="mono">{ "delete": { "_id": "2" } }</text><text x="20" y="48" class="sub">Action line, no source line follows</text>
+  </g>
+  <line x1="480" y1="448" x2="520" y2="448" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(520, 416)">
+    <rect width="320" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#0B64DD"/>
+    <text x="20" y="28" class="label">Send straight through</text><text x="20" y="48" class="sub">delete never waits in the queue</text>
+  </g>
+  <line x1="840" y1="448" x2="880" y2="448" stroke="#516381" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(880, 416)">
+    <rect width="280" height="64" rx="6" fill="#FFFFFF" stroke="#CAD3E2" stroke-width="1.5"/><rect width="4" height="64" fill="#BC1E70"/>
+    <text x="20" y="28" class="label">delete doc 2</text><text x="20" y="48" class="sub">id comes from the action line</text>
+  </g>
+
+  <text x="40" y="528" class="sub">Teal stripe: action line. Grey stripe: source line. Pink stripe: operation sent to Elasticsearch.</text>
+</svg>
