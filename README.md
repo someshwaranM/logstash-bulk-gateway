@@ -11,7 +11,7 @@ The client sends a normal bulk body. Logstash does four things before anything r
 
 This repo goes with the Elastic Search Labs article on processing Bulk API requests with Logstash.
 
-![Architecture: a legacy client posts a bulk request to Logstash, which pairs lines, applies rules and writes to per-tenant indices in Elasticsearch](docs/architecture.svg)
+![Architecture: a legacy client posts a bulk request to Logstash, which pairs lines, applies rules and writes to per-tenant indices in Elasticsearch](docs/architecture.png)
 
 ## What you need
 
@@ -92,7 +92,7 @@ A bulk body is not one JSON document. It's lines, and most operations take two o
 
 The pipeline puts it back. It keeps a small queue per request ID. An action line goes into the queue and is dropped. The next source line takes the oldest waiting action and inherits its operation and ID. A `delete` has no source line, so it skips the queue.
 
-![Five bulk lines turn into four Elasticsearch operations using a pending queue](docs/pairing.svg)
+![Five bulk lines turn into four Elasticsearch operations using a pending queue](docs/pairing.png)
 
 This only works if events are handled in order, one at a time. That's why [config/logstash.yml](config/logstash.yml) sets `pipeline.workers: 1` and `pipeline.ordered: true`.
 
@@ -126,7 +126,7 @@ Logstash refuses to start. Set it back to `1` after.
 | [sample/bulk-acme.ndjson](sample/bulk-acme.ndjson) | The test bulk body |
 | [scripts/send.sh](scripts/send.sh) | Posts a bulk file with the two headers |
 | [scripts/verify.sh](scripts/verify.sh) | Checks the final state in Elasticsearch |
-| [docs/](docs) | The two diagrams (SVG) and the [logos](docs/logos/NOTICE.md) they use, with their source and trademark note |
+| [docs/](docs) | The two diagrams as PNG, with the editable SVG sources, and the [logos](docs/logos/NOTICE.md) they use, with their source and trademark note |
 
 ## Things to know
 
