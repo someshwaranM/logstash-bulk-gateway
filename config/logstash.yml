@@ -7,7 +7,11 @@ pipeline.ordered: true
 # Keep documents Elasticsearch rejects with a 400 or 404, like mapping errors.
 dead_letter_queue.enable: true
 
-# Uncomment to survive a restart. Use checkpoint writes 1 for the most durable
-# queue, at a cost in speed. See "What to watch out for" in the article.
+# The persistent queue keeps events across a restart, but this pipeline keeps
+# its pairing queues in memory. In a kill -9 test, queue.checkpoint.writes: 1
+# lost every document of a request that was split across two batches (replayed
+# source lines came back without their action lines and were rejected as
+# orphans). The default checkpoint settings recovered them in the same test,
+# but nothing guarantees that. Treat the persistent queue as a help, not a
+# guarantee.
 # queue.type: persisted
-# queue.checkpoint.writes: 1
