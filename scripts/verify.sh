@@ -14,6 +14,10 @@ check() { # name, expected, actual
 curl -s -u "$AUTH" -X POST "$ES/$IDX/_refresh" >/dev/null
 
 doc1=$(curl -s -u "$AUTH" "$ES/$IDX/_doc/1")
+if [ "$(echo "$doc1" | jq -r '.found')" != "true" ]; then
+  echo "FAIL  doc 1 does not exist. Did ./scripts/send.sh run, and has Logstash had a few seconds to process it?"
+  exit 1
+fi
 check "doc 1 exists"               "true"           "$(echo "$doc1" | jq -r '.found')"
 check "doc 1 was updated (total)"  "45"             "$(echo "$doc1" | jq -r '._source.total | floor')"
 check "doc 1 email is masked"      "j***@example.com" "$(echo "$doc1" | jq -r '._source.email')"
