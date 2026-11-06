@@ -55,13 +55,14 @@ Then try the awkward requests a real bulk client can send:
 ./scripts/edge-cases.sh
 ```
 
-It checks six more things, and you should see six `PASS` lines again:
+It checks seven more things, and you should see seven `PASS` lines:
 
 - a body sent as `application/json` is split into lines and indexed
 - two documents without an `_id` both get stored, each with an ID Elasticsearch generates
 - a document with its own fields named `url`, `host` and `event` keeps them
 - an invalid tenant name is rejected and never indexed
 - a mapping error isn't indexed
+- an update changes the field but keeps the document's original `@timestamp`
 - the mapping error ends up in the dead letter queue
 
 If port 8080 is already used on your machine, pick another one and use it for both steps:
@@ -154,8 +155,8 @@ Logstash refuses to start. Set it back to `1` after.
 
 **What this works with**
 
-- It works for clients that only look at the status code, like `curl`, scripts and vendor tools. The official Elasticsearch clients won't work. They check that the server is Elasticsearch, and the gateway always answers with a plain-text `ok` and no `X-Elastic-Product` header. With the Python client 9.5.1 it raises `UnsupportedProductError`. See [Automatic product check](https://www.elastic.co/docs/reference/elasticsearch/clients/javascript/connecting#product-check) in the JavaScript client docs.
-- The http input can only answer `200`, `201`, `202` or `204`. A client never sees which documents failed. A `200` means Logstash received the body, not that Elasticsearch indexed it.
+- It works for clients that only look at the status code, like `curl`, scripts and vendor tools. The official Elasticsearch clients won't work. They check that the server is Elasticsearch, and once Logstash accepts the body, the gateway answers with a plain-text `ok` and no `X-Elastic-Product` header. With the Python client 9.5.1 it raises `UnsupportedProductError`. See [Automatic product check](https://www.elastic.co/docs/reference/elasticsearch/clients/javascript/connecting#product-check) in the JavaScript client docs.
+- The http input can only answer `200`, `201`, `202` or `204` for an accepted request. It answers `429` when Logstash is backed up, and it rejects bodies over `max_content_length`, which is 100 MB by default. A client never sees which documents failed. A `200` means Logstash received the body, not that Elasticsearch indexed it.
 - These bulk details are ignored: the `_index` the client sends, `routing`, `if_seq_no` and `if_primary_term`, a per-action `pipeline`, URL parameters like `?refresh`, and an index in the path (`/my-index/_bulk`).
 - An action line is found by its shape. A document with a top-level field named `index`, `create`, `update` or `delete` that holds an object looks like an action line.
 
@@ -169,12 +170,13 @@ Logstash refuses to start. Set it back to `1` after.
 
 - A document Elasticsearch rejects with a `400` or `404`, like a mapping error, goes to the dead letter queue. It's turned on in `config/logstash.yml`. A `409` conflict is logged and dropped. Other errors, like `429`, are retried until they succeed, which stalls the single worker. See the [output plugin docs](https://www.elastic.co/docs/reference/logstash/plugins/plugins-outputs-elasticsearch#_retry_policy).
 - To look at the dead letter queue: `docker compose exec logstash sh -c 'cat /usr/share/logstash/data/dead_letter_queue/main/*.log | grep -a -c BAD-MAPPING'`.
-- The [failure store](https://www.elastic.co/docs/manage-data/data-store/data-streams/failure-store) is an Elasticsearch feature that catches mapping and ingest failures inside a data stream. It only works with `create` operations, and this gateway also does `index`, `update` and `delete` on regular indices, so it isn't used here.
+- The [failure store](https://www.elastic.co/docs/manage-data/data-store/data-streams/failure-store) is an Elasticsearch feature that catches mapping and ingest failures inside a data stream. It belongs to a data stream, and data streams only take new documents through `create`. This gateway also does `index`, `update` and `delete` on regular indices, so it isn't used here. It doesn't capture backpressure, security errors or version conflicts either.
 
 **Limits**
 
 - One worker means this doesn't scale across CPU cores on one node. Run several independent pipelines if you need more, split by tenant.
 - Ordered in Logstash isn't ordered end to end. The output retries only the actions that failed, so an `update` can reach Elasticsearch before a retried `index` of the same document.
+- The aggregate timeouts are `timeout => 3600` and `inactivity_timeout => 300`, on purpose. If Elasticsearch is slow, the single worker can sit in the output between an action line and its source line, and a queue that expires in between turns the source line into an orphan. With 30 seconds, a 50 second Elasticsearch stall lost a document in a test. An open queue only costs memory.
 - The aggregate queues live in memory. With the persistent queue on, a crash can replay source lines whose action lines were already processed, and those become orphans. The settings are commented out in `config/logstash.yml`.
 - Masking only covers a top-level `email` field, and it keeps the domain. It isn't full PII redaction.
 - The password in this repo is `changeme` for both `elastic` and Kibana's service user, and TLS is off. It's for trying things out only.

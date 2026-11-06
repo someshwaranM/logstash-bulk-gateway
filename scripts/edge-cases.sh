@@ -39,8 +39,16 @@ send "application/x-ndjson" "Bad/Tenant" "edge-4-$(date +%s)" $'{ "index": { "_i
 sleep 4
 send "application/x-ndjson" edge "edge-5-$(date +%s)" $'{ "index": { "_id": "map1" } }\n{ "order_id": "BAD-MAPPING", "total": "not-a-number", "level": "info" }\n'
 
+# 6. an update must keep the document's original @timestamp
+send "application/x-ndjson" edge "edge-6a-$(date +%s)" $'{ "index": { "_id": "ts1" } }\n{ "order_id": "TS-1", "total": 1.5, "level": "info" }\n'
+
 sleep 6
 curl -s -u "$AUTH" -X POST "$ES/orders-*/_refresh" >/dev/null
+ts_before=$(curl -s -u "$AUTH" "$ES/$IDX/_doc/ts1" | jq -r '._source["@timestamp"]')
+send "application/x-ndjson" edge "edge-6b-$(date +%s)" $'{ "update": { "_id": "ts1" } }\n{ "doc": { "total": 2.5 } }\n'
+sleep 5
+curl -s -u "$AUTH" -X POST "$ES/orders-*/_refresh" >/dev/null
+ts1=$(curl -s -u "$AUTH" "$ES/$IDX/_doc/ts1")
 
 check "application/json body is split into lines and indexed" "1" \
   "$(count '{"query":{"term":{"order_id.keyword":"CT-1"}}}' $IDX)"
@@ -52,6 +60,8 @@ check "invalid tenant is rejected, not indexed"              "0" \
   "$(count '{"query":{"term":{"order_id.keyword":"INVALID-TENANT"}}}' 'orders-*')"
 check "mapping error is not indexed"                         "0" \
   "$(count '{"query":{"term":{"order_id.keyword":"BAD-MAPPING"}}}' $IDX)"
+check "an update changes the field but keeps the original @timestamp" "2.5,$ts_before" \
+  "$(echo "$ts1" | jq -r '._source | [.total, .["@timestamp"]] | join(",")')"
 dlq=$(docker compose exec -T logstash sh -c 'cat /usr/share/logstash/data/dead_letter_queue/main/*.log 2>/dev/null | grep -a -c BAD-MAPPING' | tr -d '[:space:]')
 if [ "${dlq:-0}" -ge 1 ] 2>/dev/null; then echo "PASS  mapping error is in the dead letter queue"; else echo "FAIL  mapping error is not in the dead letter queue (found '${dlq:-}')"; fail=1; fi
 
