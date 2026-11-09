@@ -29,6 +29,12 @@ Start the stack:
 docker compose up -d
 ```
 
+Elasticsearch, Kibana and Logstash all use the same version, set by `STACK_VERSION` (it defaults to 9.5.6, the version this was tested with). To try another one, set it for every command:
+
+```sh
+STACK_VERSION=9.5.6 docker compose up -d
+```
+
 Wait until Logstash answers on its monitoring port:
 
 ```sh
@@ -47,7 +53,16 @@ Then check the result:
 ./scripts/verify.sh
 ```
 
-You should see six `PASS` lines.
+You should see six `PASS` lines:
+
+```
+PASS  doc 1 exists
+PASS  doc 1 was updated (total)
+PASS  doc 1 email is masked
+PASS  doc 1 has no nested 'doc'
+PASS  doc 2 was deleted
+PASS  doc 3 (debug) was dropped
+```
 
 Then try the awkward requests a real bulk client can send:
 
@@ -64,6 +79,29 @@ It runs 18 checks and should print 18 `PASS` lines. Requests that should be reje
 - an invalid tenant name, and an update with `script` or `doc_as_upsert`
 - an update that keeps the original `@timestamp`, and one that sends a new one
 - a mapping error, which is not indexed and lands in the dead letter queue
+
+The output looks like this:
+
+```
+PASS  application/json body is split into lines and indexed
+PASS  two documents without _id both get stored
+PASS  client fields url, host and event are kept
+PASS  client tags array is kept
+PASS  client tags string is kept
+PASS  epoch milliseconds @timestamp (number) is converted
+PASS  epoch milliseconds @timestamp (string) is converted
+PASS  ISO @timestamp is kept
+PASS  client @metadata can't steer routing
+PASS  invalid tenant is rejected and printed
+PASS  unparseable @timestamp is rejected and printed
+PASS  tags object is rejected and printed
+PASS  update with a script is rejected, document untouched
+PASS  update with doc_as_upsert is rejected, nothing created
+PASS  update keeps the original @timestamp
+PASS  update that sends @timestamp applies it
+PASS  mapping error is not indexed
+PASS  mapping error is in the dead letter queue
+```
 
 If port 8080 is already used on your machine, pick another one and use it for both steps:
 
@@ -129,14 +167,20 @@ Look at how a failed request looks to the client. It still gets a plain `ok` bac
 curl -si -X POST localhost:8080/ -H 'Content-Type: application/x-ndjson' -H 'X-Request-Id: x' -H 'X-Tenant-Id: Not/Valid' --data-binary $'{ "index": { "_id": "1" } }\n{ "a": 1 }\n'
 ```
 
-Now try more than one worker. Set `pipeline.workers: 2` in `config/logstash.yml` and restart Logstash:
+Now try more than one worker. Set `pipeline.workers: 2` in `config/logstash.yml` and recreate the container:
 
 ```sh
 docker compose up -d --force-recreate logstash
+```
+
+Compose reports the container as started, but Logstash stops a few seconds later. Check:
+
+```sh
+docker compose ps -a logstash
 docker compose logs logstash | grep "requires the use of a single pipeline worker"
 ```
 
-Logstash refuses to start. Set it back to `1` after.
+The status shows `Exited (1)`, and the log shows the message. Set it back to `1` after.
 
 ## Files
 
@@ -149,6 +193,7 @@ Logstash refuses to start. Set it back to `1` after.
 | [scripts/send.sh](scripts/send.sh) | Posts a bulk file with the two headers |
 | [scripts/verify.sh](scripts/verify.sh) | Checks the final state in Elasticsearch |
 | [scripts/edge-cases.sh](scripts/edge-cases.sh) | Sends the awkward requests and checks each result |
+| [LICENSE](LICENSE) | Apache License 2.0 |
 | [docs/](docs) | The two diagrams as PNG, with the editable SVG sources, and the [logos](docs/logos/NOTICE.md) they use, with their source and trademark note |
 
 ## Things to know
@@ -185,6 +230,10 @@ Logstash refuses to start. Set it back to `1` after.
 - Masking only covers a top-level `email` field (a string, or a list of strings), and it keeps the domain. It isn't full PII redaction.
 - The password in this repo is `changeme` for both `elastic` and Kibana's service user, and TLS is off. It's for trying things out only.
 - Elasticsearch ingest pipelines can mask and route bulk data too. Use those if that's all you need. This gateway makes sense when the client must not know Elasticsearch exists, or you need to enrich from other sources or write to more than one place.
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE). The Elastic, Elasticsearch, Kibana and Logstash logos in `docs/logos` are trademarks of Elasticsearch B.V. and aren't covered by it. See [docs/logos/NOTICE.md](docs/logos/NOTICE.md).
 
 ## Clean up
 
